@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uniform Billing – Quick Entry</title>
+<style>
+  :root {
+    --bg: #f5f6fa; --card: #fff; --accent: #0b6e4f; --muted: #6b7280;
+  }
+  * { box-sizing: border-box; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+  body { margin: 0; background: var(--bg); color: #111; padding: 12px; }
+  .container { max-width: 950px; margin: auto; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .logo { background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 6px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; margin-bottom:12px;}
+  th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+  th { background: #f0f2f5; color: var(--muted); font-weight: 600; }
+  input, button, select { padding: 6px 8px; border-radius: 6px; border: 1px solid #dcdfe3; font-size: 14px; width: 100%; }
+  input[readonly] { background: #f9fafb; }
+  .btn-print, .btn-whatsapp { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; margin-top: 12px; cursor:pointer; }
+  .right { text-align: right; }
+  footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 13px; }
+  .exchange-toggle { margin: 10px 0; display: flex; align-items: center; gap: 8px; }
+  @media (max-width: 600px) {
+    th, td { font-size: 13px; padding: 8px; }
+    .btn-print, .btn-whatsapp { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">Uniform Billing</div>
+    <div>Invoice #: <strong id="invoiceNo">INV-0001</strong></div>
+  </header>
+
+  <div class="exchange-toggle">
+    <label><input type="checkbox" id="exchangeMode"> Exchange Mode (Size Change)</label>
+  </div>
+
+  <table id="billTable">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Old Size</th>
+        <th>New Size</th>
+        <th>Unit Price (₹)</th>
+        <th>Qty</th>
+        <th>Total / Diff (₹)</th>
+      </tr>
+    </thead>
+    <tbody id="billBody"></tbody>
+    <tfoot>
+      <tr style="background:#fafafa;font-weight:600;">
+        <td colspan="5" class="right">Grand Total</td>
+        <td id="grandTotal" class="right">₹0.00</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <label for="customerNumber">Customer WhatsApp Number (India):</label>
+  <input type="tel" id="customerNumber" placeholder="Enter 10-digit number (e.g. 9876543210)" pattern="[0-9]{10}" maxlength="10" />
+
+  <label for="paymentMethod">Payment Method:</label>
+  <select id="paymentMethod">
+    <option value="Cash">Cash</option>
+    <option value="Card">Card</option>
+    <option value="Paytm">Paytm</option>
+  </select>
+
+  <button class="btn-print" onclick="window.print()">🖨️ Print / Save Invoice</button>
+  <button class="btn-whatsapp" onclick="sendWhatsApp()">💬 Send via WhatsApp</button>
+
+  <footer>Simple & Fast Billing — Mobile + Desktop Ready</footer>
+</div>
+
+<script>
+// --- Price Data ---
+const priceList = {
+  "Full Sleeve Shirt": {30:720,32:750,34:780,36:810,38:850,40:900,42:930,44:980,46:1030},
+  "Full Pant": {},
+  "Full Sleeve Sweater": {30:710,32:730,34:760,36:790,38:800,40:850,42:900,44:950,46:1000},
+  "Sleeveless Sweater": {30:600,32:650,34:700,36:750,38:790,40:830,42:850,44:880,46:910},
+  "Blazer": {30:2450,32:2480,34:2510,36:2540,38:2570,40:2600,42:2650,44:2700,46:2750,48:2800,50:2850},
+  "Upper BLUE HOUSE": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Upper YELLOW House": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Upper RED House": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Upper GREEN House": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Track Lower House": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Upper BLUE Regular": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Upper MEHROON Regular": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Lower BLUE Regular": {20:510,22:540,24:570,26:610,28:640,30:670,32:700,34:750,36:800,38:850,40:900,42:950},
+  "Lower MEHROON Regular": {30:2450,32:2480,34:2510,36:2540,38:2570,40:2600,42:2650,44:2700,46:2750,48:2800,50:2850},
+  "Sweat T-Shirt BLUE": {20:1040,22:1090,24:1140,26:1290,28:1340,30:1390,32:1440,34:1490,36:1540,38:1590,40:1640,42:1690},
+  "Sweat T-Shirt MEHROON": {20:1040,22:1090,24:1140,26:1290,28:1340,30:1390,32:1440,34:1490,36:1540,38:1590,40:1640,42:1690},
+  "House Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
+  "Mehroon Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
+  "Blue Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
+  "Cap": {"All":260},
+  "Belt": {"All":160}
+};
+
+// Full Pant price table (based on LENGTH × WAIST)
+const fullPantLengthRate = {30:1110,32:1160,34:1210,36:1300,38:1380,40:1420,42:1470,44:1510,46:1550};
+for (let L = 34; L <= 52; L += 2) {
+  for (let W = 28; W <= 50; W += 2) {
+    priceList["Full Pant"][`${L}x${W}`] = fullPantLengthRate[L] || null;
+  }
+}
+
+const items = Object.keys(priceList);
+const tbody = document.getElementById("billBody");
+const grandTotalEl = document.getElementById("grandTotal");
+const exchangeToggle = document.getElementById("exchangeMode");
+
+// Create table rows
+items.forEach(item=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td>${item}</td>
+    <td><input list="old-${item}" placeholder="Old size" class="old-size" disabled></td>
+    <td><input list="sizes-${item}" placeholder="New size"></td>
+    <td><input type="number" id="price-${item}" readonly></td>
+    <td><input type="number" id="qty-${item}" min="0" value="0"></td>
+    <td class="right" id="total-${item}">₹0.00</td>
+  `;
+  tbody.appendChild(tr);
+
+  // datalist for new + old sizes
+  const dl1=document.createElement('datalist');
+  dl1.id=`sizes-${item}`;
+  const dl2=document.createElement('datalist');
+  dl2.id=`old-${item}`;
+  for(const s in priceList[item]) {
+    const opt=document.createElement('option'); opt.value=s;
+    dl1.appendChild(opt.cloneNode(true));
+    dl2.appendChild(opt);
+  }
+  document.body.appendChild(dl1);
+  document.body.appendChild(dl2);
+});
+
+exchangeToggle.addEventListener("change",()=>{
+  const oldInputs=document.querySelectorAll(".old-size");
+  oldInputs.forEach(inp=>inp.disabled=!exchangeToggle.checked);
+  updateTotals();
+});
+
+// handle updates
+tbody.querySelectorAll("input").forEach(inp=>{
+  inp.addEventListener("input", updateTotals);
+});
+
+function updateTotals(){
+  let grand=0;
+  const exchangeMode=exchangeToggle.checked;
+  items.forEach(item=>{
+    const sizeInput=document.querySelector(`input[list='sizes-${item}']`);
+    const oldSizeInput=document.querySelector(`input[list='old-${item}']`);
+    const qtyEl=document.getElementById(`qty-${item}`);
+    const priceEl=document.getElementById(`price-${item}`);
+    const totalEl=document.getElementById(`total-${item}`);
+
+    let newPrice=0, oldPrice=0;
+    const newSize=sizeInput.value.trim();
+    const oldSize=oldSizeInput?oldSizeInput.value.trim():"";
+
+    if(item==="Full Pant" && newSize.includes("x")){
+      const len=parseInt(newSize.split("x")[0]);
+      if(fullPantLengthRate[len]) newPrice=fullPantLengthRate[len];
+    } else if(priceList[item][newSize] && !isNaN(priceList[item][newSize])){
+      newPrice=priceList[item][newSize];
+    } else if(priceList[item]["All"]) newPrice=priceList[item]["All"];
+
+    if(exchangeMode && oldSize){
+      if(priceList[item][oldSize] && !isNaN(priceList[item][oldSize])){
+        oldPrice=priceList[item][oldSize];
+      } else if(priceList[item]["All"]) oldPrice=priceList[item]["All"];
+    }
+
+    const qty=Number(qtyEl.value)||0;
+    let total;
+    if(exchangeMode){
+      total=(newPrice-oldPrice)*qty;
+    } else {
+      total=newPrice*qty;
+    }
+
+    priceEl.value=newPrice||"";
+    totalEl.textContent="₹"+total.toFixed(2);
+    grand+=total;
+  });
+  grandTotalEl.textContent="₹"+grand.toFixed(2);
+}
+
+// WhatsApp integration with customer number
+function sendWhatsApp(){
+  updateTotals();
+  const custNumber=document.getElementById("customerNumber").value.trim();
+  if(!/^[0-9]{10}$/.test(custNumber)){
+    alert("Please enter a valid 10-digit Indian mobile number.");
+    return;
+  }
+  const waNumber="91"+custNumber;
+  const exchangeMode=exchangeToggle.checked;
+
+  let message=`*Invoice ${document.getElementById("invoiceNo").textContent}*\n\n`;
+  message+=exchangeMode ? "Mode: *Exchange (Size Change)*\n\n" : "";
+
+  items.forEach(item=>{
+    const qty=document.getElementById(`qty-${item}`).value;
+    const newSize=document.querySelector(`input[list='sizes-${item}']`).value;
+    const oldSize=document.querySelector(`input[list='old-${item}']`).value;
+    const total=document.getElementById(`total-${item}`).textContent;
+    if(Number(qty)>0){
+      if(exchangeMode){
+        message+=`${item} | Old: ${oldSize} → New: ${newSize} | Qty: ${qty} | Diff: ${total}\n`;
+      } else {
+        message+=`${item} | Size: ${newSize} | Qty: ${qty} | Total: ${total}\n`;
+      }
+    }
+  });
+
+  message+=`\n*Grand Total:* ${grandTotalEl.textContent}`;
+  message+=`\n*Payment Method:* ${document.getElementById('paymentMethod').value}`;
+  const url=`https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+  window.open(url,"_blank");
+}
+</script>
+</body>
+</html>
