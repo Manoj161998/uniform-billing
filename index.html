@@ -62,6 +62,14 @@
   <label for="customerNumber">Customer WhatsApp Number (India):</label>
   <input type="tel" id="customerNumber" placeholder="Enter 10-digit number (e.g. 9876543210)" pattern="[0-9]{10}" maxlength="10" />
 
+    <!-- ✅ Added image section before payment method -->
+  <label for="invoiceImage">Shop / QR Image:</label>
+  <div style="text-align:center;margin-bottom:10px;">
+    <img src="barcode.jpg" alt="Shop Logo or QR" id="invoiceImage"
+         style="max-width:250px;width:100%;border:1px solid #ccc;border-radius:8px;padding:5px;">
+  </div>
+
+
   <label for="paymentMethod">Payment Method:</label>
   <select id="paymentMethod">
     <option value="Cash">Cash</option>
@@ -230,4 +238,5 @@ function sendWhatsApp(){
 </script>
 </body>
 </html>
+
 
