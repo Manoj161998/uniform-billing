@@ -16,7 +16,7 @@
   table { width: 100%; border-collapse: collapse; background: var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; margin-bottom:12px;}
   th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
   th { background: #f0f2f5; color: var(--muted); font-weight: 600; }
-  input, button, select { padding: 6px 8px; border-radius: 6px; border: 1px solid #dcdfe3; font-size: 14px; width: 100%; }
+  select, input, button { padding: 6px 8px; border-radius: 6px; border: 1px solid #dcdfe3; font-size: 14px; width: 100%; }
   input[readonly] { background: #f9fafb; }
   .btn-print, .btn-whatsapp { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; margin-top: 12px; cursor:pointer; }
   .right { text-align: right; }
@@ -24,6 +24,7 @@
   .exchange-toggle { margin: 10px 0; display: flex; align-items: center; gap: 8px; }
   @media (max-width: 600px) {
     th, td { font-size: 13px; padding: 8px; }
+    select, input { font-size: 13px; padding: 8px; }
     .btn-print, .btn-whatsapp { width: 100%; }
   }
 </style>
@@ -53,6 +54,10 @@
     <tbody id="billBody"></tbody>
     <tfoot>
       <tr style="background:#fafafa;font-weight:600;">
+        <td colspan="5" class="right">Total Quantity</td>
+        <td id="totalQty" class="right">0</td>
+      </tr>
+      <tr style="background:#fafafa;font-weight:600;">
         <td colspan="5" class="right">Grand Total</td>
         <td id="grandTotal" class="right">₹0.00</td>
       </tr>
@@ -62,13 +67,11 @@
   <label for="customerNumber">Customer WhatsApp Number (India):</label>
   <input type="tel" id="customerNumber" placeholder="Enter 10-digit number (e.g. 9876543210)" pattern="[0-9]{10}" maxlength="10" />
 
-    <!-- ✅ Added image section before payment method -->
   <label for="invoiceImage">Shop / QR Image:</label>
   <div style="text-align:center;margin-bottom:10px;">
     <img src="barcode.jpg" alt="Shop Logo or QR" id="invoiceImage"
          style="max-width:250px;width:100%;border:1px solid #ccc;border-radius:8px;padding:5px;">
   </div>
-
 
   <label for="paymentMethod">Payment Method:</label>
   <select id="paymentMethod">
@@ -90,26 +93,26 @@ const priceList = {
   "Full Pant": {},
   "Full Sleeve Sweater": {30:710,32:730,34:760,36:790,38:800,40:850,42:900,44:950,46:1000},
   "Sleeveless Sweater": {30:600,32:650,34:700,36:750,38:790,40:830,42:850,44:880,46:910},
-  "Blazer": {30:2450,32:2480,34:2510,36:2540,38:2570,40:2600,42:2650,44:2700,46:2750,48:2800,50:2850},
-  "Upper BLUE HOUSE": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "Upper YELLOW House": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "Upper RED House": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "Upper GREEN House": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "Track Lower House": {20:510,22:540,24:570,26:610,28:640,30:670,32:700,34:750,36:800,38:850,40:900,42:950},
-  "Upper BLUE Regular": {20:1570,22:1650,24:1700,26:1750,28:1800,30:1850,32:1900,34:1950,36:2000,38:2050,40:2100,42:2150},
-  "Upper MEHROON Regular": {20:1570,22:1650,24:1700,26:1750,28:1800,30:1850,32:1900,34:1950,36:2000,38:2050,40:2100,42:2150},
-  "Lower BLUE Regular": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "Lower MEHROON Regular": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "Blazer": {30:2450,32:2480,34:2510,36:2540,38:2570,40:2600,42:2650,44:2700,46:2750,48:2800,50:2850}, 
+  "Regular Blue": {20:1570,22:1650,24:1700,26:1750,28:1800,30:1850,32:1900,34:1950,36:2000,38:2050,40:2100,42:2150},
+  "Regular Blue Lower": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
   "Sweat T-Shirt BLUE": {20:1040,22:1090,24:1140,26:1290,28:1340,30:1390,32:1440,34:1490,36:1540,38:1590,40:1640,42:1690},
+  "Regular Mehroon": {20:1570,22:1650,24:1700,26:1750,28:1800,30:1850,32:1900,34:1950,36:2000,38:2050,40:2100,42:2150},
+  "Regular Mehroon Lower": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
   "Sweat T-Shirt MEHROON": {20:1040,22:1090,24:1140,26:1290,28:1340,30:1390,32:1440,34:1490,36:1540,38:1590,40:1640,42:1690},
-  "House Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
+  "House BLUE ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House YELLOW ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House RED ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House GREEN ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House Lower": {20:510,22:540,24:570,26:610,28:640,30:670,32:700,34:750,36:800,38:850,40:900,42:950},
   "Mehroon Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
   "Blue Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
+  "House Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
   "Cap": {"All":260},
   "Belt": {"All":160}
 };
 
-// Full Pant price table (based on LENGTH × WAIST)
+// Full Pant price table (LENGTH × WAIST)
 const fullPantLengthRate = {30:1110,32:1160,34:1210,36:1300,38:1380,40:1420,42:1470,44:1510,46:1550};
 for (let L = 34; L <= 52; L += 2) {
   for (let W = 28; W <= 50; W += 2) {
@@ -120,123 +123,94 @@ for (let L = 34; L <= 52; L += 2) {
 const items = Object.keys(priceList);
 const tbody = document.getElementById("billBody");
 const grandTotalEl = document.getElementById("grandTotal");
+const totalQtyEl = document.getElementById("totalQty");
 const exchangeToggle = document.getElementById("exchangeMode");
 
-// Create table rows
+// --- Build Table ---
 items.forEach(item=>{
   const tr=document.createElement('tr');
+  const sizeOptions=Object.keys(priceList[item]).map(s=>`<option value="${s}">${s}</option>`).join('');
   tr.innerHTML=`
     <td>${item}</td>
-    <td><input list="old-${item}" placeholder="Old size" class="old-size" disabled></td>
-    <td><input list="sizes-${item}" placeholder="New size"></td>
+    <td><select class="old-size" disabled><option value="">Select</option>${sizeOptions}</select></td>
+    <td><select class="new-size"><option value="">Select</option>${sizeOptions}</select></td>
     <td><input type="number" id="price-${item}" readonly></td>
     <td><input type="number" id="qty-${item}" min="0" value="0"></td>
     <td class="right" id="total-${item}">₹0.00</td>
   `;
   tbody.appendChild(tr);
-
-  // datalist for new + old sizes
-  const dl1=document.createElement('datalist');
-  dl1.id=`sizes-${item}`;
-  const dl2=document.createElement('datalist');
-  dl2.id=`old-${item}`;
-  for(const s in priceList[item]) {
-    const opt=document.createElement('option'); opt.value=s;
-    dl1.appendChild(opt.cloneNode(true));
-    dl2.appendChild(opt);
-  }
-  document.body.appendChild(dl1);
-  document.body.appendChild(dl2);
 });
 
 exchangeToggle.addEventListener("change",()=>{
-  const oldInputs=document.querySelectorAll(".old-size");
-  oldInputs.forEach(inp=>inp.disabled=!exchangeToggle.checked);
+  document.querySelectorAll(".old-size").forEach(inp=>inp.disabled=!exchangeToggle.checked);
   updateTotals();
 });
 
-// handle updates
-tbody.querySelectorAll("input").forEach(inp=>{
-  inp.addEventListener("input", updateTotals);
-});
+tbody.addEventListener("input", updateTotals);
+tbody.addEventListener("change", updateTotals);
 
 function updateTotals(){
-  let grand=0;
+  let grand=0, totalQty=0;
   const exchangeMode=exchangeToggle.checked;
   items.forEach(item=>{
-    const sizeInput=document.querySelector(`input[list='sizes-${item}']`);
-    const oldSizeInput=document.querySelector(`input[list='old-${item}']`);
-    const qtyEl=document.getElementById(`qty-${item}`);
-    const priceEl=document.getElementById(`price-${item}`);
-    const totalEl=document.getElementById(`total-${item}`);
+    const row=[...tbody.rows].find(r=>r.cells[0].innerText===item);
+    if(!row) return;
+    const newSize=row.querySelector(".new-size").value;
+    const oldSize=row.querySelector(".old-size").value;
+    const qtyEl=row.querySelector(`#qty-${item}`);
+    const priceEl=row.querySelector(`#price-${item}`);
+    const totalEl=row.querySelector(`#total-${item}`);
 
     let newPrice=0, oldPrice=0;
-    const newSize=sizeInput.value.trim();
-    const oldSize=oldSizeInput?oldSizeInput.value.trim():"";
-
     if(item==="Full Pant" && newSize.includes("x")){
       const len=parseInt(newSize.split("x")[0]);
       if(fullPantLengthRate[len]) newPrice=fullPantLengthRate[len];
-    } else if(priceList[item][newSize] && !isNaN(priceList[item][newSize])){
-      newPrice=priceList[item][newSize];
-    } else if(priceList[item]["All"]) newPrice=priceList[item]["All"];
+    } else if(priceList[item][newSize]) newPrice=priceList[item][newSize];
+    else if(priceList[item]["All"]) newPrice=priceList[item]["All"];
 
     if(exchangeMode && oldSize){
-      if(priceList[item][oldSize] && !isNaN(priceList[item][oldSize])){
-        oldPrice=priceList[item][oldSize];
-      } else if(priceList[item]["All"]) oldPrice=priceList[item]["All"];
+      if(priceList[item][oldSize]) oldPrice=priceList[item][oldSize];
+      else if(priceList[item]["All"]) oldPrice=priceList[item]["All"];
     }
 
     const qty=Number(qtyEl.value)||0;
-    let total;
-    if(exchangeMode){
-      total=(newPrice-oldPrice)*qty;
-    } else {
-      total=newPrice*qty;
-    }
-
+    const total=exchangeMode ? (newPrice-oldPrice)*qty : newPrice*qty;
     priceEl.value=newPrice||"";
     totalEl.textContent="₹"+total.toFixed(2);
-    grand+=total;
+    grand+=total; totalQty+=qty;
   });
   grandTotalEl.textContent="₹"+grand.toFixed(2);
+  totalQtyEl.textContent=totalQty;
 }
 
-// WhatsApp integration with customer number
 function sendWhatsApp(){
   updateTotals();
-  const custNumber=document.getElementById("customerNumber").value.trim();
-  if(!/^[0-9]{10}$/.test(custNumber)){
-    alert("Please enter a valid 10-digit Indian mobile number.");
-    return;
-  }
-  const waNumber="91"+custNumber;
+  const num=document.getElementById("customerNumber").value.trim();
+  if(!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
+  const wa="91"+num;
   const exchangeMode=exchangeToggle.checked;
-
-  let message=`*Invoice ${document.getElementById("invoiceNo").textContent}*\n\n`;
-  message+=exchangeMode ? "Mode: *Exchange (Size Change)*\n\n" : "";
+  let msg=`*Invoice ${document.getElementById("invoiceNo").textContent}*\n\n`;
+  msg+=exchangeMode ? "Mode: *Exchange (Size Change)*\n\n" : "";
 
   items.forEach(item=>{
-    const qty=document.getElementById(`qty-${item}`).value;
-    const newSize=document.querySelector(`input[list='sizes-${item}']`).value;
-    const oldSize=document.querySelector(`input[list='old-${item}']`).value;
-    const total=document.getElementById(`total-${item}`).textContent;
+    const row=[...tbody.rows].find(r=>r.cells[0].innerText===item);
+    if(!row) return;
+    const qty=row.querySelector(`#qty-${item}`).value;
     if(Number(qty)>0){
-      if(exchangeMode){
-        message+=`${item} | Old: ${oldSize} → New: ${newSize} | Qty: ${qty} | Diff: ${total}\n`;
-      } else {
-        message+=`${item} | Size: ${newSize} | Qty: ${qty} | Total: ${total}\n`;
-      }
+      const ns=row.querySelector(".new-size").value;
+      const os=row.querySelector(".old-size").value;
+      const total=row.querySelector(`#total-${item}`).textContent;
+      msg+=exchangeMode
+        ? `${item} | Old: ${os} → New: ${ns} | Qty: ${qty} | Diff: ${total}\n`
+        : `${item} | Size: ${ns} | Qty: ${qty} | Total: ${total}\n`;
     }
   });
 
-  message+=`\n*Grand Total:* ${grandTotalEl.textContent}`;
-  message+=`\n*Payment Method:* ${document.getElementById('paymentMethod').value}`;
-  const url=`https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
-  window.open(url,"_blank");
+  msg+=`\n*Total Qty:* ${totalQtyEl.textContent}`;
+  msg+=`\n*Grand Total:* ${grandTotalEl.textContent}`;
+  msg+=`\n*Payment:* ${document.getElementById('paymentMethod').value}`;
+  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 </script>
 </body>
 </html>
-
-
