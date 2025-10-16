@@ -5,37 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Uniform Billing – Quick Entry</title>
 <style>
-  :root {
-    --bg: #f5f6fa; --card: #fff; --accent: #0b6e4f; --muted: #6b7280;
-  }
-  * { box-sizing: border-box; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-  body { margin: 0; background: var(--bg); color: #111; padding: 12px; }
-  .container { max-width: 950px; margin: auto; }
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-  .logo { background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 6px; font-weight: 700; }
-  table { width: 100%; border-collapse: collapse; background: var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; margin-bottom:12px;}
-  th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
-  th { background: #f0f2f5; color: var(--muted); font-weight: 600; }
-  select, input, button { padding: 6px 8px; border-radius: 6px; border: 1px solid #dcdfe3; font-size: 14px; width: 100%; }
-  input[readonly] { background: #f9fafb; }
-  .btn-print, .btn-whatsapp { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; margin-top: 12px; cursor:pointer; }
-  .right { text-align: right; }
-  footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 13px; }
-  .exchange-toggle { margin: 10px 0; display: flex; align-items: center; gap: 8px; }
+:root {
+  --bg: #f5f6fa; --card: #fff; --accent: #0b6e4f; --muted: #6b7280;
+}
+* { box-sizing: border-box; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+body { margin: 0; background: var(--bg); color: #111; padding: 12px; }
+.container { max-width: 950px; margin: auto; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.logo { background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 6px; font-weight: 700; }
+table { width: 100%; border-collapse: collapse; background: var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; margin-bottom:12px;}
+th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+th { background: #f0f2f5; color: var(--muted); font-weight: 600; }
+select, input, button { padding: 6px 8px; border-radius: 6px; border: 1px solid #dcdfe3; font-size: 14px; width: 100%; }
+input[readonly] { background: #f9fafb; }
+.btn-print, .btn-whatsapp { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; margin-top: 12px; cursor:pointer; }
+.right { text-align: right; }
+footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 13px; }
+.exchange-toggle { margin: 10px 0; display: flex; align-items: center; gap: 8px; }
+
 @media (max-width: 600px) {
   th, td { font-size: 13px; padding: 8px; }
   select, input { 
-    font-size: 11px;  /* bigger so mobile shows value */
-    padding: 1px; 
+    font-size: 12px;  
+    padding: 4px; 
     width: 100%; 
-    -webkit-appearance: none; /* remove default arrow styling issues on iOS */
+    -webkit-appearance: none; 
     appearance: none;
     background-color: #fff; 
     color: #111;
   }
   .btn-print, .btn-whatsapp { width: 100%; }
 }
-
 </style>
 </head>
 <body>
@@ -97,7 +97,7 @@
 <script>
 // --- Helper ---
 function idSafe(name) {
-  return name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  return name.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
 }
 
 // --- Price Data ---
@@ -113,10 +113,10 @@ const priceList = {
   "Regular Mehroon": {20:1570,22:1650,24:1700,26:1750,28:1800,30:1850,32:1900,34:1950,36:2000,38:2050,40:2100,42:2150},
   "Regular Mehroon Lower": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
   "Sweat T-Shirt MEHROON": {20:1040,22:1090,24:1140,26:1290,28:1340,30:1390,32:1440,34:1490,36:1540,38:1590,40:1640,42:1690},
-  "House BLUE ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "House YELLOW ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "House RED ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
-  "House GREEN ": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House BLUE": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House YELLOW": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House RED": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
+  "House GREEN": {20:660,22:690,24:720,26:760,28:790,30:820,32:850,34:900,36:950,38:1000,40:1050,42:1100},
   "House Lower": {20:510,22:540,24:570,26:610,28:640,30:670,32:700,34:750,36:800,38:850,40:900,42:950},
   "Mehroon Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
   "Blue Socks": {1:130,2:130,3:130,4:145,5:145,6:160,7:160,8:160},
@@ -127,9 +127,9 @@ const priceList = {
 
 // Full Pant price table
 const fullPantLengthRate = {30:1110,32:1160,34:1210,36:1300,38:1380,40:1420,42:1470,44:1510,46:1550};
-for (let L = 34; L <= 52; L += 2) {
-  for (let W = 28; W <= 50; W += 2) {
-    priceList["Full Pant"][`${L}x${W}`] = fullPantLengthRate[L] || null;
+for(let L in fullPantLengthRate){
+  for(let W=28; W<=50; W+=2){
+    priceList["Full Pant"][`${L}x${W}`] = fullPantLengthRate[L];
   }
 }
 
@@ -160,111 +160,98 @@ exchangeToggle.addEventListener("change", () => {
   updateTotals();
 });
 
-tbody.addEventListener("input", updateTotals);
-tbody.addEventListener("change", updateTotals);
-
-// Prefill price & quantity immediately on size select
-tbody.querySelectorAll(".new-size").forEach(sel => {
-  sel.addEventListener("change", () => {
+// Prefill price & quantity on size select
+tbody.addEventListener("change", e => {
+  if(e.target.classList.contains("new-size")){
+    const sel = e.target;
     const row = sel.closest("tr");
-    const item = row.cells[0].innerText;
+    const item = row.cells[0].innerText.trim();
     const priceEl = row.querySelector(`#price-${idSafe(item)}`);
     const qtyEl = row.querySelector(`#qty-${idSafe(item)}`);
-    const newSize = sel.value;
+    if(!priceEl || !qtyEl) return;
 
-    // Fill price
-    if(item === "Full Pant" && newSize.includes("x")){
-        const len = parseInt(newSize.split("x")[0]);
-        priceEl.value = fullPantLengthRate[len] || "";
-    } else if(priceList[item][newSize]){
-        priceEl.value = priceList[item][newSize];
-    } else if(priceList[item]["All"]){
-        priceEl.value = priceList[item]["All"];
+    const newSize = sel.value;
+    let newPrice = 0;
+
+    if(item==="Full Pant" && newSize.includes("x")){
+      const len = parseInt(newSize.split("x")[0]);
+      if(fullPantLengthRate[len]!==undefined) newPrice = fullPantLengthRate[len];
+    } else if(priceList[item] && priceList[item][newSize]!==undefined){
+      newPrice = priceList[item][newSize];
+    } else if(priceList[item] && priceList[item]["All"]!==undefined){
+      newPrice = priceList[item]["All"];
     }
 
-    // Prefill quantity with 1 if 0
-    if(qtyEl && Number(qtyEl.value) === 0) qtyEl.value = 1;
-
+    priceEl.value = newPrice || "";
+    if(Number(qtyEl.value)===0) qtyEl.value = 1;
     updateTotals();
-  });
+  }
 });
 
-function updateTotals() {
-  let grand = 0, totalQty = 0;
+tbody.addEventListener("input", updateTotals);
+
+function updateTotals(){
+  let grand=0,totalQty=0;
   const exchangeMode = exchangeToggle.checked;
-
-  items.forEach(item => {
-    const row = [...tbody.rows].find(r => r.cells[0].innerText === item);
-    if (!row) return;
-
+  items.forEach(item=>{
+    const row=[...tbody.rows].find(r=>r.cells[0].innerText.trim()===item);
+    if(!row) return;
     const newSize = row.querySelector(".new-size").value;
     const oldSize = row.querySelector(".old-size").value;
     const qtyEl = row.querySelector(`#qty-${idSafe(item)}`);
     const priceEl = row.querySelector(`#price-${idSafe(item)}`);
     const totalEl = row.querySelector(`#total-${idSafe(item)}`);
-
-    let newPrice = 0, oldPrice = 0;
-
-    if(item === "Full Pant" && newSize.includes("x")){
-      const len = parseInt(newSize.split("x")[0]);
-      if(fullPantLengthRate[len]) newPrice = fullPantLengthRate[len];
-    } else if(priceList[item][newSize]){
-      newPrice = priceList[item][newSize];
-    } else if(priceList[item]["All"]){
-      newPrice = priceList[item]["All"];
+    let newPrice=0, oldPrice=0;
+    if(item==="Full Pant" && newSize.includes("x")){
+      const len=parseInt(newSize.split("x")[0]);
+      if(fullPantLengthRate[len]!==undefined) newPrice=fullPantLengthRate[len];
+    } else if(priceList[item] && priceList[item][newSize]!==undefined){
+      newPrice=priceList[item][newSize];
+    } else if(priceList[item] && priceList[item]["All"]!==undefined){
+      newPrice=priceList[item]["All"];
     }
-
     if(exchangeMode && oldSize){
-      if(priceList[item][oldSize]) oldPrice = priceList[item][oldSize];
-      else if(priceList[item]["All"]) oldPrice = priceList[item]["All"];
+      if(priceList[item] && priceList[item][oldSize]!==undefined) oldPrice=priceList[item][oldSize];
+      else if(priceList[item] && priceList[item]["All"]!==undefined) oldPrice=priceList[item]["All"];
     }
-
     if(priceEl) priceEl.value = newPrice || "";
     const qty = Number(qtyEl?.value) || 0;
-    let total = exchangeMode ? (newPrice - oldPrice) * qty : newPrice * qty;
-    if(totalEl) totalEl.textContent = "₹" + total.toFixed(2);
-
-    grand += total;
-    totalQty += qty;
+    let total = exchangeMode ? (newPrice - oldPrice)*qty : newPrice*qty;
+    if(totalEl) totalEl.textContent="₹"+total.toFixed(2);
+    grand+=total;
+    totalQty+=qty;
   });
-
-  grandTotalEl.textContent = "₹" + grand.toFixed(2);
-  totalQtyEl.textContent = totalQty;
+  grandTotalEl.textContent="₹"+grand.toFixed(2);
+  totalQtyEl.textContent=totalQty;
 }
 
-function sendWhatsApp() {
+function sendWhatsApp(){
   updateTotals();
-  const num = document.getElementById("customerNumber").value.trim();
+  const num=document.getElementById("customerNumber").value.trim();
   if(!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
-  const wa = "91"+num;
+  const wa="91"+num;
   const exchangeMode = exchangeToggle.checked;
-
-  // Get current date & time
   const dt = new Date();
-  const dateTime = dt.toLocaleString('en-IN', { hour12: true });
-
-  let msg = `*Invoice*\nDate: ${dateTime}\n\n`;
+  const dateTime = dt.toLocaleString('en-IN',{hour12:true});
+  let msg=`*Invoice*\nDate: ${dateTime}\n\n`;
   msg += exchangeMode ? "Mode: *Exchange (Size Change)*\n\n" : "";
-
-  items.forEach(item => {
-    const row = [...tbody.rows].find(r => r.cells[0].innerText === item);
+  items.forEach(item=>{
+    const row=[...tbody.rows].find(r=>r.cells[0].innerText.trim()===item);
     if(!row) return;
-    const qty = row.querySelector(`#qty-${idSafe(item)}`)?.value;
-    if(Number(qty) > 0){
-      const ns = row.querySelector(".new-size").value;
-      const os = row.querySelector(".old-size").value;
-      const total = row.querySelector(`#total-${idSafe(item)}`)?.textContent;
+    const qty=row.querySelector(`#qty-${idSafe(item)}`)?.value;
+    if(Number(qty)>0){
+      const ns=row.querySelector(".new-size").value;
+      const os=row.querySelector(".old-size").value;
+      const total=row.querySelector(`#total-${idSafe(item)}`)?.textContent;
       msg += exchangeMode
         ? `${item} | Old: ${os} → New: ${ns} | Qty: ${qty} | Diff: ${total}\n`
         : `${item} | Size: ${ns} | Qty: ${qty} | Total: ${total}\n`;
     }
   });
-
-  msg += `\n*Total Qty:* ${totalQtyEl.textContent}`;
-  msg += `\n*Grand Total:* ${grandTotalEl.textContent}`;
-  msg += `\n*Payment:* ${document.getElementById('paymentMethod').value}`;
-
-  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank");
+  msg+=`\n*Total Qty:* ${totalQtyEl.textContent}`;
+  msg+=`\n*Grand Total:* ${grandTotalEl.textContent}`;
+  msg+=`\n*Payment:* ${document.getElementById('paymentMethod').value}`;
+  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 </script>
 </body>
