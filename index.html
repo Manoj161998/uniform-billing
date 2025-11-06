@@ -19,6 +19,7 @@ th { background: #f0f2f5; color: var(--muted); font-weight: 600; }
 select, input, button { padding: 6px 8px; border-radius: 6px; border: 1px solid #dcdfe3; font-size: 14px; width: 100%; }
 input[readonly] { background: #f9fafb; }
 .btn-print, .btn-whatsapp { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; margin-top: 12px; cursor:pointer; }
+.btn-download { background:#2b7bdc; color:#fff; border:none; padding:10px 16px; border-radius:8px; font-weight:600; margin-top:12px; cursor:pointer; }  
 .right { text-align: right; }
 footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 13px; }
 .exchange-toggle { margin: 10px 0; display: flex; align-items: center; gap: 8px; }
@@ -87,9 +88,10 @@ footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 1
     <option value="Card">Card</option>
     <option value="Paytm">Paytm</option>
   </select>
-
+  
   <button class="btn-print" onclick="window.print()">🖨️ Print / Save Invoice</button>
   <button class="btn-whatsapp" onclick="sendWhatsApp()">💬 Send via WhatsApp</button>
+  <button class="btn-download" onclick="downloadSales()">⬇️ Download Sales CSV</button>
 
   <footer>Simple & Fast Billing — Mobile + Desktop Ready</footer>
 </div>
@@ -225,35 +227,65 @@ function updateTotals(){
   totalQtyEl.textContent=totalQty;
 }
 
+  // --- SAVE SALES IN CSV FORMAT ---
+function saveSaleToLocal(invoiceData){
+  const prev=JSON.parse(localStorage.getItem("salesCSV")||"[]");
+  prev.push(invoiceData);
+  localStorage.setItem("salesCSV",JSON.stringify(prev));
+}
+  
+  function downloadSales(){
+  const all=JSON.parse(localStorage.getItem("salesCSV")||"[]");
+  if(!all.length){alert("No sales data available.");return;}
+  const header=Object.keys(all[0]).join(",");
+  const rows=all.map(r=>Object.values(r).map(v=>`"${v}"`).join(","));
+  const csv=[header,...rows].join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="sales_data.csv";
+  a.click();
+}
+
 function sendWhatsApp(){
   updateTotals();
   const num=document.getElementById("customerNumber").value.trim();
   if(!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
   const wa="91"+num;
-  const exchangeMode = exchangeToggle.checked;
-  const dt = new Date();
-  const dateTime = dt.toLocaleString('en-IN',{hour12:true});
-  let msg=`*Invoice*\nDate: ${dateTime}\n\n`;
-  msg += exchangeMode ? "Mode: *Exchange (Size Change)*\n\n" : "";
+  const exchangeMode=exchangeToggle.checked;
+  const dt=new Date();
+  const dateTime=dt.toLocaleString('en-IN',{hour12:true});
+  const payment=document.getElementById("paymentMethod").value;
+
+  let msg=`*Invoice*\nDate: ${dateTime}\n`;
+  msg+=exchangeMode?"Mode: *Exchange (Size Change)*\n\n":"\n";
+
+  let saleRows=[];
   items.forEach(item=>{
     const row=[...tbody.rows].find(r=>r.cells[0].innerText.trim()===item);
-    if(!row) return;
-    const qty=row.querySelector(`#qty-${idSafe(item)}`)?.value;
+    const qty=row.querySelector(`#qty-${idSafe(item)}`).value;
     if(Number(qty)>0){
       const ns=row.querySelector(".new-size").value;
       const os=row.querySelector(".old-size").value;
-      const total=row.querySelector(`#total-${idSafe(item)}`)?.textContent;
-      msg += exchangeMode
-        ? `${item} | Old: ${os} → New: ${ns} | Qty: ${qty} | Diff: ${total}\n`
-        : `${item} | Size: ${ns} | Qty: ${qty} | Total: ${total}\n`;
+      const total=row.querySelector(`#total-${idSafe(item)}`).textContent.replace("₹","");
+      msg+=exchangeMode
+        ? `${item} | Old: ${os} → New: ${ns} | Qty: ${qty} | Diff: ₹${total}\n`
+        : `${item} | Size: ${ns} | Qty: ${qty} | Total: ₹${total}\n`;
+      saleRows.push({date:dateTime,mode:exchangeMode?"Exchange":"Normal",item,oldSize:os,newSize:ns,qty,total,payment,customer:num});
     }
   });
+
   msg+=`\n*Total Qty:* ${totalQtyEl.textContent}`;
   msg+=`\n*Grand Total:* ${grandTotalEl.textContent}`;
-  msg+=`\n*Payment:* ${document.getElementById('paymentMethod').value}`;
+  msg+=`\n*Payment:* ${payment}`;
+
+  // Save each sale row to localStorage
+  saleRows.forEach(saveSaleToLocal);
+
   window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 </script>
 </body>
 </html>
+
 
