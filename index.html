@@ -311,19 +311,32 @@ function sendWhatsApp(){
   };
 
   // Send one POST (no-cors is OK for simple blind POST; Apps Script will receive it)
-  fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(billData)
-  });
+    // Send to Google Sheets first, then open WhatsApp (works on mobile)
+  const sendToSheet = async () => {
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(billData)
+      });
+    } catch (err) {
+      console.warn("Google Sheet save error:", err);
+    } finally {
+      // Always open WhatsApp after a short delay
+      setTimeout(() => {
+        window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank");
+      }, 800);
+    }
+  };
 
+  sendToSheet();
 
-  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 </script>
 </body>
 </html>
+
 
 
 
