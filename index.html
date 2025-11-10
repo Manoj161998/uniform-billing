@@ -282,10 +282,48 @@ function sendWhatsApp(){
   // Save each sale row to localStorage
   saleRows.forEach(saveSaleToLocal);
 
+  // --- Send to Google Sheets ---
+
+  // Save each sale row to localStorage (unchanged)
+  saleRows.forEach(saveSaleToLocal);
+
+  // --- Send full invoice (single POST) to Google Sheets ---
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzR0ZnWVSgW373iNrraHxxtpELMLkMBXMhvwNxvISbKiIwAgN_bATLZhkZMv9az-8I6/exec"; // <-- replace with your actual Web App URL from Apps Script
+
+  // Build billData (one object per invoice)
+  const dt2 = new Date();
+  const date = dt2.toISOString().slice(0,10);
+  const billData = {
+    date: date,
+    dateTime: dateTime,
+    customer: num,
+    payment: payment,
+    mode: exchangeMode ? "Exchange" : "Normal",
+    totalQty: totalQtyEl.textContent,
+    totalAmt: grandTotalEl.textContent.replace("₹",""),
+    items: saleRows.map(it => ({
+      item: it.item,
+      newSize: it.newSize || it.size || "",
+      oldSize: it.oldSize || "",
+      qty: it.qty,
+      total: it.total
+    }))
+  };
+
+  // Send one POST (no-cors is OK for simple blind POST; Apps Script will receive it)
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(billData)
+  });
+
+
   window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 </script>
 </body>
 </html>
+
 
 
