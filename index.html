@@ -291,95 +291,126 @@ function saveSaleToLocal(invoiceData){
   a.click();
 }
 
-function sendWhatsApp(){
+function saveToGoogleSheet() {
   updateTotals();
-  const num=document.getElementById("customerNumber").value.trim();
-  if(!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
-  const wa="91"+num;
-  const exchangeMode=exchangeToggle.checked;
-  const dt=new Date();
-  const dateTime=dt.toLocaleString('en-IN',{hour12:true});
-  const payment=document.getElementById("paymentMethod").value;
+  const num = document.getElementById("customerNumber").value.trim();
+  const exchangeMode = exchangeToggle.checked;
+  const dt = new Date();
+  const dateTime = dt.toLocaleString('en-IN', { hour12: true });
+  const payment = document.getElementById("paymentMethod").value;
 
-  let msg=`*Invoice*\nDate: ${dateTime}\n`;
-  msg+=exchangeMode?"Mode: *Exchange (Size Change)*\n\n":"\n";
+  let saleRows = [];
 
-  let saleRows=[];
-  items.forEach(item=>{
-    const row=[...tbody.rows].find(r=>r.cells[0].innerText.trim()===item);
-    const qty=row.querySelector(`#qty-${idSafe(item)}`).value;
-    if(Number(qty)>0){
-      const ns=row.querySelector(".new-size").value;
-      const os=row.querySelector(".old-size").value;
-      const total=row.querySelector(`#total-${idSafe(item)}`).textContent.replace("₹","");
-      msg+=exchangeMode
-        ? `${item} | Old: ${os} → New: ${ns} | Qty: ${qty} | Diff: ₹${total}\n`
-        : `${item} | Size: ${ns} | Qty: ${qty} | Total: ₹${total}\n`;
-      saleRows.push({date:dateTime,mode:exchangeMode?"Exchange":"Normal",item,oldSize:os,newSize:ns,qty,total,payment,customer:num});
+  [...tbody.rows].forEach(row => {
+    const item = row.cells[0].innerText.replace("(extra)", "").trim();
+    const qtyEl = row.querySelector(".qty");
+    const qty = Number(qtyEl?.value) || 0;
+    if (qty > 0) {
+      const ns = row.querySelector(".new-size")?.value || "";
+      const os = row.querySelector(".old-size")?.value || "";
+      const total = row.querySelector(".total")?.textContent.replace("₹","").trim() || "0";
+      saleRows.push({
+        date: dateTime,
+        mode: exchangeMode ? "Exchange" : "Normal",
+        item,
+        oldSize: os,
+        newSize: ns,
+        qty,
+        total,
+        payment,
+        customer: num
+      });
     }
   });
 
-  msg+=`\n*Total Qty:* ${totalQtyEl.textContent}`;
-  msg+=`\n*Grand Total:* ${grandTotalEl.textContent}`;
-  msg+=`\n*Payment:* ${payment}`;
+  if (!saleRows.length) return alert("Please enter at least one item before saving.");
 
-  // Save each sale row to localStorage
-  saleRows.forEach(saveSaleToLocal);
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzR0ZnWVSgW373iNrraHxxtpELMLkMBXMhvwNxvISbKiIwAgN_bATLZhkZMv9az-8I6/exec";
+  const date = new Date().toISOString().slice(0, 10);
 
-  // --- Send to Google Sheets ---
-
-  // Save each sale row to localStorage (unchanged)
-  saleRows.forEach(saveSaleToLocal);
-
-  // --- Send full invoice (single POST) to Google Sheets ---
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzR0ZnWVSgW373iNrraHxxtpELMLkMBXMhvwNxvISbKiIwAgN_bATLZhkZMv9az-8I6/exec"; // <-- replace with your actual Web App URL from Apps Script
-
-  // Build billData (one object per invoice)
-  const dt2 = new Date();
-  const date = dt2.toISOString().slice(0,10);
   const billData = {
-    date: date,
-    dateTime: dateTime,
+    date,
+    dateTime,
     customer: num,
-    payment: payment,
+    payment,
     mode: exchangeMode ? "Exchange" : "Normal",
     totalQty: totalQtyEl.textContent,
-    totalAmt: grandTotalEl.textContent.replace("₹",""),
-    items: saleRows.map(it => ({
-      item: it.item,
-      newSize: it.newSize || it.size || "",
-      oldSize: it.oldSize || "",
-      qty: it.qty,
-      total: it.total
-    }))
+    totalAmt: grandTotalEl.textContent.replace("₹", ""),
+    items: saleRows
   };
 
-  // Send one POST (no-cors is OK for simple blind POST; Apps Script will receive it)
-    // Send to Google Sheets first, then open WhatsApp (works on mobile)
-  const sendToSheet = async () => {
-    try {
-      await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(billData)
-      });
-    } catch (err) {
-      console.warn("Google Sheet save error:", err);
-    } finally {
-      // Always open WhatsApp after a short delay
-      setTimeout(() => {
-        window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank");
-      }, 80);
-    }
-  };
-
-  sendToSheet();
-
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(billData)
+  })
+  .then(() => alert("✅ Data saved to Google Sheet successfully!"))
+  .catch(err => {
+    console.error("Google Sheet save error:", err);
+    alert("⚠️ Failed to save to Google Sheet.");
+  });
 }
+
+
+function sendWhatsApp() {
+  updateTotals();
+  const num = document.getElementById("customerNumber").value.trim();
+  if (!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
+  const wa = "91" + num;
+  const exchangeMode = exchangeToggle.checked;
+  const dt = new Date();
+  const dateTime = dt.toLocaleString('en-IN', { hour12: true });
+  const payment = document.getElementById("paymentMethod").value;
+
+  let msg = `*Invoice*\nDate: ${dateTime}\n`;
+  msg += exchangeMode ? "Mode: *Exchange (Size Change)*\n\n" : "\n";
+
+  let saleRows = [];
+
+  // 🔧 Loop through all table rows (works for "extra" ones too)
+  [...tbody.rows].forEach(row => {
+    const item = row.cells[0].innerText.replace("(extra)", "").trim();
+    const qtyEl = row.querySelector(".qty");
+    const qty = Number(qtyEl?.value) || 0;
+    if (qty > 0) {
+      const ns = row.querySelector(".new-size")?.value || "";
+      const os = row.querySelector(".old-size")?.value || "";
+      const total = row.querySelector(".total")?.textContent.replace("₹", "").trim() || "0";
+
+      msg += exchangeMode
+        ? `${item} | Old: ${os} → New: ${ns} | Qty: ${qty} | Diff: ₹${total}\n`
+        : `${item} | Size: ${ns} | Qty: ${qty} | Total: ₹${total}\n`;
+
+      saleRows.push({
+        date: dateTime,
+        mode: exchangeMode ? "Exchange" : "Normal",
+        item,
+        oldSize: os,
+        newSize: ns,
+        qty,
+        total,
+        payment,
+        customer: num
+      });
+    }
+  });
+
+  msg += `\n*Total Qty:* ${totalQtyEl.textContent}`;
+  msg += `\n*Grand Total:* ${grandTotalEl.textContent}`;
+  msg += `\n*Payment:* ${payment}`;
+
+  // 💾 Save each sale row to localStorage
+  saleRows.forEach(saveSaleToLocal);
+
+  
+ window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank");}
+ ;
+
 </script>
 </body>
 </html>
+
 
 
 
