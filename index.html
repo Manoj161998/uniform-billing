@@ -23,6 +23,16 @@ input[readonly] { background: #f9fafb; }
 .right { text-align: right; }
 footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 13px; }
 .exchange-toggle { margin: 10px 0; display: flex; align-items: center; gap: 8px; }
+.btn-save {
+  background:#ff9800;
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:8px;
+  font-weight:600;
+  margin-top:12px;
+  cursor:pointer;
+}
 
 @media (max-width: 600px) {
   th, td { font-size: 13px; padding: 8px; }
@@ -89,9 +99,9 @@ footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 1
     <option value="Paytm">Paytm</option>
   </select>
   
-  <button class="btn-print" onclick="window.print()">🖨️ Print / Save Invoice</button>
-  <button class="btn-whatsapp" onclick="sendWhatsApp()">💬 Send via WhatsApp</button>
-  <button class="btn-download" onclick="downloadSales()">⬇️ Download Sales CSV</button>
+ <button class="btn-save" onclick="saveToGoogleSheet()">📤 Save to Google Sheet</button>
+<button class="btn-whatsapp" onclick="sendWhatsApp()">💬 Send via WhatsApp</button>
+<button class="btn-download" onclick="downloadSales()">⬇️ Download Sales CSV</button>
 
   <footer>Simple & Fast Billing — Mobile + Desktop Ready</footer>
 </div>
@@ -410,6 +420,7 @@ function sendWhatsApp() {
 </script>
 </body>
 </html>
+
 
 
 
