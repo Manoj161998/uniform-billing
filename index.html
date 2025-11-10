@@ -165,32 +165,42 @@ function addItemRow(item, isExtra = false, afterRow = null) {
   addBtn.title = "Add another size for same item";
 
   addBtn.onclick = () => {
-    // Add new row just below this one
     const nextRow = tr.nextSibling;
     const newRow = addItemRow(item, true, tr);
     tbody.insertBefore(newRow, nextRow);
   };
 
-  // If it's an extra row, apply light highlight
-  if (isExtra) tr.style.background = "#f9f9f9";
+  const newSizeSelect = tr.querySelector(".new-size");
+  const oldSizeSelect = tr.querySelector(".old-size");
+  const qtyInput = tr.querySelector(".qty");
 
-  // Return the created row (so caller can insert precisely)
-  if (afterRow) {
-    tbody.insertBefore(tr, afterRow.nextSibling);
-  } else {
-    tbody.appendChild(tr);
-  }
+  // --- Auto-fill qty = 1 when size is selected (old or new) ---
+  [newSizeSelect, oldSizeSelect].forEach(sel => {
+    sel.addEventListener("change", () => {
+      if (!qtyInput.value || qtyInput.value === "0") qtyInput.value = 1;
+      updateTotals();
+    });
+  });
+
+  qtyInput.addEventListener("input", updateTotals);
+  oldSizeSelect.addEventListener("change", updateTotals);
+  newSizeSelect.addEventListener("change", updateTotals);
+
+  if (isExtra) tr.style.background = "#f9f9f9";
+  if (afterRow) tbody.insertBefore(tr, afterRow.nextSibling);
+  else tbody.appendChild(tr);
 
   return tr;
 }
 
-
-// --- Event Listeners ---
 exchangeToggle.addEventListener("change", () => {
-  document.querySelectorAll(".old-size").forEach(inp => inp.disabled = !exchangeToggle.checked);
+  const on = exchangeToggle.checked;
+  document.querySelectorAll(".old-size").forEach(el => {
+    el.disabled = !on;
+    if (!on) el.value = "";
+  });
   updateTotals();
 });
-
 // Prefill price & quantity on size select
 tbody.addEventListener("change", e => {
   if(e.target.classList.contains("new-size")){
@@ -370,6 +380,7 @@ function sendWhatsApp(){
 </script>
 </body>
 </html>
+
 
 
 
