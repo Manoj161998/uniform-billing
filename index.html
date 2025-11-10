@@ -364,65 +364,11 @@ function saveToGoogleSheet() {
 }
 
 
-function sendWhatsApp() {
+function sendAndSaveWhatsApp() {
   updateTotals();
   const num = document.getElementById("customerNumber").value.trim();
   if (!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
-  const wa = "91" + num;
-  const exchangeMode = exchangeToggle.checked;
-  const dt = new Date();
-  const dateTime = dt.toLocaleString('en-IN', { hour12: true });
-  const payment = document.getElementById("paymentMethod").value;
 
-  let msg = `*Invoice*\nDate: ${dateTime}\n`;
-  msg += exchangeMode ? "Mode: *Exchange (Size Change)*\n\n" : "\n";
-
-  let saleRows = [];
-
-  // 🔧 Loop through all table rows (works for "extra" ones too)
-  [...tbody.rows].forEach(row => {
-    const item = row.cells[0].innerText.replace("(extra)", "").trim();
-    const qtyEl = row.querySelector(".qty");
-    const qty = Number(qtyEl?.value) || 0;
-    if (qty > 0) {
-      const ns = row.querySelector(".new-size")?.value || "";
-      const os = row.querySelector(".old-size")?.value || "";
-      const total = row.querySelector(".total")?.textContent.replace("₹", "").trim() || "0";
-
-      msg += exchangeMode
-        ? `${item} | Old: ${os} → New: ${ns} | Qty: ${qty} | Diff: ₹${total}\n`
-        : `${item} | Size: ${ns} | Qty: ${qty} | Total: ₹${total}\n`;
-
-      saleRows.push({
-        date: dateTime,
-        mode: exchangeMode ? "Exchange" : "Normal",
-        item,
-        oldSize: os,
-        newSize: ns,
-        qty,
-        total,
-        payment,
-        customer: num
-      });
-    }
-  });
-
-  msg += `\n*Total Qty:* ${totalQtyEl.textContent}`;
-  msg += `\n*Grand Total:* ${grandTotalEl.textContent}`;
-  msg += `\n*Payment:* ${payment}`;
-
-  // 💾 Save each sale row to localStorage
-  saleRows.forEach(saveSaleToLocal);
-
-  
- window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank");}
- ;
-
-  function sendAndSaveWhatsApp() {
-  updateTotals();
-  const num = document.getElementById("customerNumber").value.trim();
-  if (!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
-  
   const wa = "91" + num;
   const exchangeMode = exchangeToggle.checked;
   const dt = new Date();
@@ -434,10 +380,10 @@ function sendWhatsApp() {
 
   let msg = `*Invoice*\n📅 ${dateTime}\n`;
   msg += exchangeMode ? "🔁 Mode: *Exchange (Size Change)*\n\n" : "\n";
-  
+
   let saleRows = [];
 
-  // Loop through table rows
+  // 🔧 Collect all sale items
   [...tbody.rows].forEach(row => {
     const item = row.cells[0].innerText.replace("(extra)", "").trim();
     const qtyEl = row.querySelector(".qty");
@@ -472,7 +418,11 @@ function sendWhatsApp() {
   msg += `\n💰 *Grand Total:* ${grandTotalEl.textContent}`;
   msg += `\n💳 *Payment:* ${payment}`;
 
-  // Build data for Google Sheets
+  // 🟢 1️⃣ Open WhatsApp first (instant)
+  const encodedMsg = encodeURIComponent(msg);
+  window.open(`https://wa.me/${wa}?text=${encodedMsg}`, "_blank");
+
+  // 🟡 2️⃣ Then auto-save quietly to Google Sheets in background
   const billData = {
     date,
     dateTime,
@@ -484,30 +434,25 @@ function sendWhatsApp() {
     items: saleRows
   };
 
-  // ✅ Save to Google Sheet first
-  fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(billData)
-  })
-  .then(() => {
-    // Open WhatsApp only after data is saved
-    const encodedMsg = encodeURIComponent(msg);
-    window.open(`https://wa.me/${wa}?text=${encodedMsg}`, "_blank");
-  })
-  .catch(err => {
-    console.error("Google Sheet save error:", err);
-    alert("⚠️ Failed to save to Google Sheet. WhatsApp message still sent.");
-    const encodedMsg = encodeURIComponent(msg);
-    window.open(`https://wa.me/${wa}?text=${encodedMsg}`, "_blank");
-  });
+  // small delay to make sure WhatsApp opens first
+  setTimeout(() => {
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(billData)
+    })
+    .then(() => console.log("✅ Data saved to Google Sheet"))
+    .catch(err => console.error("⚠️ Save failed:", err));
+  }, 1500);
 }
+
 
 
 </script>
 </body>
 </html>
+
 
 
 
