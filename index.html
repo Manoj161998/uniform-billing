@@ -102,6 +102,7 @@ footer { text-align: center; margin-top: 14px; color: var(--muted); font-size: 1
  <button class="btn-save" onclick="saveToGoogleSheet()">📤 Save to Google Sheet</button>
 <button class="btn-whatsapp" onclick="sendWhatsApp()">💬 Send via WhatsApp</button>
 <button class="btn-download" onclick="downloadSales()">⬇️ Download Sales CSV</button>
+  <button class="btn-whatsapp" onclick="sendAndSaveWhatsApp()">💬 Send + Save</button>
 
   <footer>Simple & Fast Billing — Mobile + Desktop Ready</footer>
 </div>
@@ -417,9 +418,97 @@ function sendWhatsApp() {
  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank");}
  ;
 
+  function sendAndSaveWhatsApp() {
+  updateTotals();
+  const num = document.getElementById("customerNumber").value.trim();
+  if (!/^[0-9]{10}$/.test(num)) return alert("Enter valid 10-digit number.");
+  
+  const wa = "91" + num;
+  const exchangeMode = exchangeToggle.checked;
+  const dt = new Date();
+  const dateTime = dt.toLocaleString('en-IN', { hour12: true });
+  const payment = document.getElementById("paymentMethod").value;
+
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzR0ZnWVSgW373iNrraHxxtpELMLkMBXMhvwNxvISbKiIwAgN_bATLZhkZMv9az-8I6/exec";
+  const date = new Date().toISOString().slice(0, 10);
+
+  let msg = `*Invoice*\n📅 ${dateTime}\n`;
+  msg += exchangeMode ? "🔁 Mode: *Exchange (Size Change)*\n\n" : "\n";
+  
+  let saleRows = [];
+
+  // Loop through table rows
+  [...tbody.rows].forEach(row => {
+    const item = row.cells[0].innerText.replace("(extra)", "").trim();
+    const qtyEl = row.querySelector(".qty");
+    const qty = Number(qtyEl?.value) || 0;
+
+    if (qty > 0) {
+      const ns = row.querySelector(".new-size")?.value || "";
+      const os = row.querySelector(".old-size")?.value || "";
+      const total = row.querySelector(".total")?.textContent.replace("₹", "").trim() || "0";
+
+      msg += exchangeMode
+        ? `• ${item}\n  Old: ${os} → New: ${ns}\n  Qty: ${qty} | Diff: ₹${total}\n────────────\n`
+        : `• ${item}\n  Size: ${ns}\n  Qty: ${qty} | Total: ₹${total}\n────────────\n`;
+
+      saleRows.push({
+        date: dateTime,
+        mode: exchangeMode ? "Exchange" : "Normal",
+        item,
+        oldSize: os,
+        newSize: ns,
+        qty,
+        total,
+        payment,
+        customer: num
+      });
+    }
+  });
+
+  if (!saleRows.length) return alert("Please enter at least one item before sending.");
+
+  msg += `\n📦 *Total Qty:* ${totalQtyEl.textContent}`;
+  msg += `\n💰 *Grand Total:* ${grandTotalEl.textContent}`;
+  msg += `\n💳 *Payment:* ${payment}`;
+
+  // Build data for Google Sheets
+  const billData = {
+    date,
+    dateTime,
+    customer: num,
+    payment,
+    mode: exchangeMode ? "Exchange" : "Normal",
+    totalQty: totalQtyEl.textContent,
+    totalAmt: grandTotalEl.textContent.replace("₹", ""),
+    items: saleRows
+  };
+
+  // ✅ Save to Google Sheet first
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(billData)
+  })
+  .then(() => {
+    // Open WhatsApp only after data is saved
+    const encodedMsg = encodeURIComponent(msg);
+    window.open(`https://wa.me/${wa}?text=${encodedMsg}`, "_blank");
+  })
+  .catch(err => {
+    console.error("Google Sheet save error:", err);
+    alert("⚠️ Failed to save to Google Sheet. WhatsApp message still sent.");
+    const encodedMsg = encodeURIComponent(msg);
+    window.open(`https://wa.me/${wa}?text=${encodedMsg}`, "_blank");
+  });
+}
+
+
 </script>
 </body>
 </html>
+
 
 
 
