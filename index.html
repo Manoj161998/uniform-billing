@@ -336,7 +336,8 @@ function saveToGoogleSheet() {
 
   if (!saleRows.length) return alert("Please enter at least one item before saving.");
 
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztNL5JO7Oub6a0pLxRZlZY1YAKh9yTb9MKN3zl-ZHf5ADebtRdJfRuF6TtTpMEdZ39/exec";
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTUTXn-qxG65Y3ZP7T1KA-iOLOtkBcPg5Nl3bMROuIWIq65AUGzydwgurzUk4yDT7X/exec";
+
 
   const date = new Date().toISOString().slice(0, 10);
 
@@ -376,7 +377,7 @@ function sendAndSaveWhatsApp() {
   const dateTime = dt.toLocaleString('en-IN', { hour12: true });
   const payment = document.getElementById("paymentMethod").value;
 
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztNL5JO7Oub6a0pLxRZlZY1YAKh9yTb9MKN3zl-ZHf5ADebtRdJfRuF6TtTpMEdZ39/exec";
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTUTXn-qxG65Y3ZP7T1KA-iOLOtkBcPg5Nl3bMROuIWIq65AUGzydwgurzUk4yDT7X/exec";
   
   const date = new Date().toISOString().slice(0, 10);
 
@@ -454,6 +455,7 @@ function sendAndSaveWhatsApp() {
 </script>
 </body>
 </html>
+
 
 
 
